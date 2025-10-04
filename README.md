@@ -1,2 +1,2 @@
-# Items-Exchange-Hub
-A full stack project for exchanging various items between common people
+# Item-Exchange-Hub
+A full stack project which enables people to exchange items and much more.
