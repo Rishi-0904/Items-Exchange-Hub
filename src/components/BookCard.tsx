@@ -1,6 +1,8 @@
 'use client';
 
 import Image from 'next/image';
+import { motion } from 'framer-motion';
+import { BookOpenIcon, UserIcon, ClockIcon, TagIcon } from '@heroicons/react/24/outline';
 import { BookAvailability } from '@/models/Book';
 import MessageButton from './MessageButton';
 
@@ -8,32 +10,59 @@ interface Book {
   _id: string;
   title: string;
   author: string;
+  description?: string;
   genre: string[];
   condition: string;
   type: string;
   availability: string;
   price?: number;
   images: string[];
-  createdAt: string;
   owner: {
     _id: string;
     name: string;
+    profileImage?: string;
   };
+  createdAt: string;
+  updatedAt?: string;
 }
 
 interface BookCardProps {
   book: Book;
   onClick: () => void;
+  className?: string;
 }
 
-export default function BookCard({ book, onClick }: BookCardProps) {
+export default function BookCard({ book, onClick, className = '' }: BookCardProps) {
   const defaultImage = '/images/book-placeholder.jpg';
-  const imageUrl = book.images && book.images.length > 0 ? book.images[0] : defaultImage;
+  const imageUrl = book.images?.[0] || defaultImage;
+  const isNew = Date.now() - new Date(book.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000; // New if less than 7 days old
 
-  // Format the date
+  // Format price with currency
+  const formatPrice = (price?: number) => {
+    if (!price) return 'Free';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(price);
+  };
+
+  // Format date
   const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) return 'Today';
+    if (diffInDays === 1) return 'Yesterday';
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
   };
 
   // Get badge color based on availability
@@ -50,8 +79,19 @@ export default function BookCard({ book, onClick }: BookCardProps) {
     }
   };
 
+  const animation = {
+    initial: { scale: 1 },
+    hover: { scale: 1.05 },
+    focus: { scale: 1.05 },
+  };
+
   return (
-    <div className="relative group bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-transform hover:scale-105 hover:shadow-lg">
+    <motion.div
+      className={`relative group bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-transform ${className}`}
+      initial="initial"
+      whileHover="hover"
+      whileFocus="focus"
+    >
       {/* Badge */}
       <div className="absolute top-2 right-2 z-10">
         <span className={`text-xs font-semibold inline-block py-1 px-2 rounded-full ${getBadgeColor(book.availability)}`}>
@@ -118,6 +158,6 @@ export default function BookCard({ book, onClick }: BookCardProps) {
           ownerName={book.owner.name}
         />
       </div>
-    </div>
+    </motion.div>
   );
-} 
+}

@@ -10,7 +10,7 @@ export async function middleware(req: NextRequest) {
 
   // Define protected routes that require authentication
   const protectedRoutes = [
-    '/books/add',
+    '/items/add',
     '/profile',
     '/messages',
   ];
@@ -34,8 +34,8 @@ export async function middleware(req: NextRequest) {
 // Specify which routes the middleware should run on
 export const config = {
   matcher: [
-    '/books/add/:path*',
+    '/items/add/:path*',
     '/profile/:path*',
     '/messages/:path*',
   ],
-}; 
+};

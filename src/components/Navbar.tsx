@@ -31,15 +31,17 @@ export default function Navbar() {
 
   const navigation = [
     { name: 'Home', href: '/' },
-    { name: 'Browse Books', href: '/books' },
-    ...(session ? [{ name: 'Add Book', href: '/books/add' }] : []),
+    { name: 'Browse Items', href: '/items' },
+    ...(session ? [{ name: 'Add Item', href: '/items/add' }] : [])
   ];
+
 
   const userNavigation = [
     { name: 'Profile', href: '/profile' },
-    { name: 'My Books', href: '/profile/books' },
-    { name: 'Messages', href: '/messages' },
+    { name: 'My Items', href: '/profile/items' },
+    { name: 'Messages', href: '/messages' }
   ];
+
 
   return (
     <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -48,7 +50,7 @@ export default function Navbar() {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link href="/" className="text-xl font-bold text-primary-600">
-                Book Exchange Hub
+                Items Exchange Hub
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">

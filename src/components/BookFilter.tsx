@@ -1,15 +1,76 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Disclosure } from '@headlessui/react';
-import { ChevronDownIcon } from '@heroicons/react/24/outline';
+import { 
+  ChevronDownIcon, 
+  FunnelIcon, 
+  XMarkIcon, 
+  BookOpenIcon, 
+  TagIcon, 
+  CheckCircleIcon 
+} from '@heroicons/react/24/outline';
 import { BookType, BookCondition, BookAvailability } from '@/models/Book';
+
+// Animation variants for the filter panel
+const filterVariants = {
+  hidden: { opacity: 0, height: 0 },
+  visible: { 
+    opacity: 1, 
+    height: 'auto',
+    transition: { 
+      duration: 0.3,
+      ease: 'easeInOut'
+    } 
+  },
+  exit: { 
+    opacity: 0, 
+    height: 0,
+    transition: { 
+      duration: 0.2,
+      ease: 'easeInOut'
+    } 
+  }
+};
+
+// Chip component for selected filters
+const FilterChip = ({ 
+  label, 
+  onRemove 
+}: { 
+  label: string; 
+  onRemove: () => void 
+}) => (
+  <motion.span
+    initial={{ scale: 0.5 }}
+    animate={{ scale: 1 }}
+    exit={{ scale: 0.5 }}
+    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-200 mr-2 mb-2"
+  >
+    {label}
+    <button
+      type="button"
+      className="ml-1.5 inline-flex items-center justify-center h-4 w-4 rounded-full text-primary-600 hover:bg-primary-200 dark:text-primary-300 dark:hover:bg-primary-800"
+      onClick={(e) => {
+        e.stopPropagation();
+        onRemove();
+      }}
+    >
+      <XMarkIcon className="h-3 w-3" />
+    </button>
+  </motion.span>
+);
 
 interface BookFilterProps {
   onFilterChange: (filterName: string, values: string[]) => void;
+  className?: string;
 }
 
-export default function BookFilter({ onFilterChange }: BookFilterProps) {
+export default function BookFilter({ 
+  onFilterChange, 
+  className = '' 
+}: BookFilterProps) {
   // Define common book genres
   const genres = [
     'Fiction',
@@ -32,7 +93,28 @@ export default function BookFilter({ onFilterChange }: BookFilterProps) {
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
-  const [selectedAvailability, setSelectedAvailability] = useState<string[]>([]);
+  const [selectedAvailability, setSelectedAvailability] = useState<string[]>(['AVAILABLE']);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  // Check if any filters are active
+  const hasActiveFilters = [
+    ...selectedTypes,
+    ...selectedGenres,
+    ...selectedConditions,
+    ...selectedAvailability.filter(a => a !== 'AVAILABLE') // Don't count default availability
+  ].length > 0;
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSelectedTypes([]);
+    setSelectedGenres([]);
+    setSelectedConditions([]);
+    setSelectedAvailability(['AVAILABLE']);
+    onFilterChange('type', []);
+    onFilterChange('genre', []);
+    onFilterChange('condition', []);
+    onFilterChange('availability', ['AVAILABLE']);
+  };
 
   // Handle checkbox changes for types
   const handleTypeChange = (type: string) => {
@@ -46,7 +128,6 @@ export default function BookFilter({ onFilterChange }: BookFilterProps) {
 
   // Handle checkbox changes for genres
   const handleGenreChange = (genre: string) => {
-    const updatedGenres = selectedGenres.includes(genre)
       ? selectedGenres.filter(g => g !== genre)
       : [...selectedGenres, genre];
     

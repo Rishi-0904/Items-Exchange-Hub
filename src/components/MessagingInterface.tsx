@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { formatDistanceToNow } from 'date-fns';
 import MessageList from './MessageList';
@@ -13,11 +13,11 @@ interface Conversation {
     image?: string;
     email: string;
   }>;
-  book: {
+  item: {
     _id: string;
     title: string;
-    author: string;
     images: string[];
+    type?: string;
   };
   lastMessage?: string;
   updatedAt: string;
@@ -29,26 +29,47 @@ export default function MessagingInterface() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchConversations();
-  }, []);
-
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     try {
-      const response = await fetch('/api/messages');
-      const data = await response.json();
-      
+      const response = await fetch('/api/messages/conversations');
       if (response.ok) {
+        const data = await response.json();
         setConversations(data.conversations);
-      } else {
-        console.error('Failed to fetch conversations:', data.error);
       }
     } catch (error) {
       console.error('Error fetching conversations:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const handleNewMessage = useCallback(async (content: string) => {
+    if (!selectedConversation || !content.trim()) return;
+
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversationId: selectedConversation,
+          content,
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh the conversation
+        fetchConversations();
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  }, [selectedConversation, fetchConversations]);
+
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
 
   const getOtherParticipant = (conversation: Conversation) => {
     return conversation.participants.find(p => p._id !== session?.user?.id);
@@ -72,8 +93,24 @@ export default function MessagingInterface() {
         
         <div className="overflow-y-auto">
           {conversations.length === 0 ? (
-            <div className="p-4 text-center text-gray-500">
-              No conversations yet. Start a conversation by messaging someone about a book!
+            <div className="flex flex-col items-center justify-center p-8 text-center">
+              <svg
+                className="h-16 w-16 text-gray-400 mb-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">No conversations yet</h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                Start a conversation by messaging someone about an item!
+              </p>
             </div>
           ) : (
             conversations.map((conversation) => {
@@ -114,7 +151,7 @@ export default function MessagingInterface() {
                       </div>
                       
                       <p className="text-sm text-gray-600 truncate">
-                        About: {conversation.book.title}
+                        About: {conversation.item.title}
                       </p>
                       
                       {conversation.lastMessage && (
